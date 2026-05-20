@@ -18,7 +18,7 @@
   <header>
     <div class="header-inner">
       <a href="/" class="logo">
-        <span class="logo-inv">Inv</span><span class="logo-tube">-tube</span>
+        <span class="logo-inv">Inv</span><span class="logo-tube">-tube</span><span class="logo-ver" id="logoVer"></span>
       </a>
       <div class="search-wrapper">
         <form class="search-form" id="searchForm">
@@ -73,5 +73,11 @@
   <script src="/static/js/background.js?v=10"></script>
   <script src="/static/js/page-shorts.js?v=10"></script>
   {% block scripts %}{% endblock %}
+  <script>
+    fetch('/version').then(r=>r.json()).then(d=>{
+      const el = document.getElementById('logoVer');
+      if(el && d.ver) el.textContent = ' v' + d.ver;
+    }).catch(()=>{});
+  </script>
 </body>
 </html>
