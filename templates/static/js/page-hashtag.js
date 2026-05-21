@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
       `<div class="error-state"><div class="error-icon">⚠️</div><p>ハッシュタグが指定されていません。</p></div>`;
     return;
   }
-  document.title = `#${tag} — Inv-tube`;
+  document.title = `#${tag} — Choco-tube-plus`;
   const header = document.getElementById('resultHeader');
   document.getElementById('resultInfo').innerHTML =
     `<strong style="font-size:1.2rem;">#${escapeHtml(tag)}</strong>`;
