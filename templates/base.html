@@ -3,22 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{% block title %}Inv-tube{% endblock %}</title>
-  <link rel="stylesheet" href="/static/css/base.css?v=10" />
-  <link rel="stylesheet" href="/static/css/global.css?v=10" />
-  <link rel="stylesheet" href="/static/css/search.css?v=10" />
-  <link rel="stylesheet" href="/static/css/channel.css?v=10" />
-  <link rel="stylesheet" href="/static/css/watch.css?v=10" />
-  <link rel="stylesheet" href="/static/css/library.css?v=10" />
-  <link rel="stylesheet" href="/static/css/settings.css?v=10" />
-  <link rel="stylesheet" href="/static/css/shorts.css?v=10" />
+  <title>{% block title %}Choco-tube-plus{% endblock %}</title>
+  <link rel="stylesheet" href="/static/css/base.css?v=13" />
+  <link rel="stylesheet" href="/static/css/global.css?v=13" />
+  <link rel="stylesheet" href="/static/css/search.css?v=13" />
+  <link rel="stylesheet" href="/static/css/channel.css?v=13" />
+  <link rel="stylesheet" href="/static/css/watch.css?v=13" />
+  <link rel="stylesheet" href="/static/css/library.css?v=13" />
+  <link rel="stylesheet" href="/static/css/settings.css?v=13" />
+  <link rel="stylesheet" href="/static/css/shorts.css?v=13" />
   {% block head %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}">
   <header>
     <div class="header-inner">
       <a href="/" class="logo">
-        <span class="logo-inv">Inv</span><span class="logo-tube">-tube</span><span class="logo-ver" id="logoVer"></span>
+        <span class="logo-inv">Choco</span><span class="logo-tube">-tube-plus</span><span class="logo-ver" id="logoVer"></span>
       </a>
       <div class="search-wrapper">
         <form class="search-form" id="searchForm">
@@ -56,22 +56,22 @@
 
   {% block content %}{% endblock %}
 
-  <script src="/static/js/utils.js?v=10"></script>
-  <script src="/static/js/components.js?v=10"></script>
-  <script src="/static/js/library.js?v=10"></script>
-  <script src="/static/js/header.js?v=10"></script>
-  <script src="/static/js/page-trending.js?v=10"></script>
-  <script src="/static/js/page-search.js?v=10"></script>
-  <script src="/static/js/page-channel.js?v=10"></script>
-  <script src="/static/js/page-playlist.js?v=10"></script>
-  <script src="/static/js/page-mix.js?v=10"></script>
-  <script src="/static/js/page-hashtag.js?v=10"></script>
-  <script src="/static/js/page-watch.js?v=10"></script>
-  <script src="/static/js/page-library.js?v=10"></script>
-  <script src="/static/js/page-dl.js?v=10"></script>
-  <script src="/static/js/page-settings.js?v=10"></script>
-  <script src="/static/js/background.js?v=10"></script>
-  <script src="/static/js/page-shorts.js?v=10"></script>
+  <script src="/static/js/utils.js?v=13"></script>
+  <script src="/static/js/components.js?v=13"></script>
+  <script src="/static/js/library.js?v=13"></script>
+  <script src="/static/js/header.js?v=13"></script>
+  <script src="/static/js/page-trending.js?v=13"></script>
+  <script src="/static/js/page-search.js?v=13"></script>
+  <script src="/static/js/page-channel.js?v=13"></script>
+  <script src="/static/js/page-playlist.js?v=13"></script>
+  <script src="/static/js/page-mix.js?v=13"></script>
+  <script src="/static/js/page-hashtag.js?v=13"></script>
+  <script src="/static/js/page-watch.js?v=13"></script>
+  <script src="/static/js/page-library.js?v=13"></script>
+  <script src="/static/js/page-dl.js?v=13"></script>
+  <script src="/static/js/page-settings.js?v=13"></script>
+  <script src="/static/js/background.js?v=13"></script>
+  <script src="/static/js/page-shorts.js?v=13"></script>
   {% block scripts %}{% endblock %}
   <script>
     fetch('/version').then(r=>r.json()).then(d=>{
