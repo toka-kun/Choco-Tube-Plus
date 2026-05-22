@@ -560,6 +560,53 @@ body.page-watch .quality-btn.active {
   box-shadow: 0 0 8px var(--glow-purple);
 }
 
+body.page-watch .quality-btn-track {
+  border-style: dashed;
+  opacity: 0.85;
+}
+
+body.page-watch .quality-btn-track:hover {
+  opacity: 1;
+}
+
+/* ===== AUDIO-ONLY MODE ===== */
+body.page-watch .player-wrap.stream-audio-only .video-player {
+  opacity: 0;
+  pointer-events: none;
+}
+
+body.page-watch .player-wrap.stream-audio-only::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--audio-poster);
+  background-size: cover;
+  background-position: center;
+  z-index: 1;
+  filter: brightness(0.55) blur(1px);
+}
+
+body.page-watch .player-wrap.stream-audio-only::after {
+  content: '🎵';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 3.5rem;
+  z-index: 2;
+  opacity: 0.9;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.8);
+  pointer-events: none;
+}
+
+body.page-watch .player-wrap.stream-audio-only .vctrls {
+  z-index: 3;
+}
+
+body.page-watch .player-wrap.stream-audio-only .vctrls-center-play {
+  z-index: 3;
+}
+
 /* HQ status */
 body.page-watch .hq-status {
   font-size: 0.72rem;
