@@ -446,6 +446,7 @@ function createHomePostCard(item) {
 }
 
 async function loadTab(tab, reset = true) {
+  if (isLoading && reset) return;
   const myGen = ++loadGen;
   currentTab = tab;
   isLoading = true;
@@ -549,6 +550,7 @@ async function loadTab(tab, reset = true) {
       grid.innerHTML = `<div class="empty-state"><p>コンテンツが見つかりませんでした。</p></div>`;
     } else {
       if (tab === 'playlists') {
+        grid.classList.remove('shorts-mode');
         items.forEach(item => grid.appendChild(createChannelPlaylistCard(item)));
       } else {
         const isShortTab = tab === 'shorts';
