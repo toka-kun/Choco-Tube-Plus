@@ -108,13 +108,17 @@ def _innertube_cont_get(channel_id: str, tab: str, inv_cont: str) -> str | None:
 
 
 def _extract_innertube_videos(data: dict) -> tuple:
-    """Parse innertube channel tab response. Returns (videos, cont_key)."""
+    """Parse innertube channel tab response. Returns (videos, raw_cont_token)."""
     result = []
-    cont_key = data.get("_contKey")
+    raw_cont_token = data.get("_rawContToken") or None
 
     contents = data.get("current_tab", {}).get("content", {}).get("contents", [])
     for item in contents:
         if not isinstance(item, dict):
+            continue
+        if item.get("type") == "ContinuationItem":
+            if not raw_cont_token:
+                raw_cont_token = item.get("endpoint", {}).get("payload", {}).get("token")
             continue
         lv = item.get("content", {})
         if not isinstance(lv, dict) or lv.get("content_type") != "VIDEO":
@@ -130,18 +134,18 @@ def _extract_innertube_videos(data: dict) -> tuple:
         for item in (data.get("videos") or data.get("items") or []):
             if not isinstance(item, dict):
                 continue
-            video_id = item.get("id")
+            video_id = item.get("videoId") or item.get("id")
             if not video_id:
                 continue
             title_obj = item.get("title", {})
             title = title_obj.get("text", "") if isinstance(title_obj, dict) else str(title_obj)
             result.append({"videoId": video_id, "title": title})
 
-    return result, cont_key
+    return result, raw_cont_token
 
 
 async def fetch_innertube_videos(channel_id: str, tab: str) -> tuple:
-    """Fetch first page of videos from innertube API. Returns (videos, cont_key)."""
+    """Fetch first page of videos from innertube API. Returns (videos, raw_cont_token)."""
     tab_map = {"videos": "videos", "shorts": "shorts", "streams": "live", "latest": "videos"}
     innertube_tab = tab_map.get(tab, "videos")
     try:
@@ -156,13 +160,13 @@ async def fetch_innertube_videos(channel_id: str, tab: str) -> tuple:
         return [], None
 
 
-async def fetch_innertube_continuation(cont_key: str) -> tuple:
-    """Fetch next page of innertube channel videos using continuation key. Returns (videos, cont_key)."""
+async def fetch_innertube_continuation(raw_token: str) -> tuple:
+    """Fetch next page using raw ContinuationItem token. Returns (videos, raw_cont_token)."""
     try:
         client = await get_client()
         resp = await client.get(
-            f"{INNERTUBE_BASE}/channel/continue",
-            params={"key": cont_key},
+            f"{INNERTUBE_BASE}/channel/continue-raw",
+            params={"token": raw_token},
             timeout=httpx.Timeout(30.0),
         )
         resp.raise_for_status()
