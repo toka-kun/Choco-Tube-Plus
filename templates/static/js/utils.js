@@ -160,7 +160,8 @@ function escapeHtml(str) {
 
 function isShortVideo(video) {
   if (video.isShort) return true;
+  if (video.type === 'shortVideo' || video.type === 'short') return true;
   const len = parseInt(video.lengthSeconds);
-  return len > 0 && len <= 60;
+  return len > 0 && len <= 90;
 }
 
