@@ -181,6 +181,67 @@
             <span class="pc-alt-status" id="eduStatus"></span>
           </div>
 
+
+        </div>
+
+        <!-- 再生設定アコーディオン -->
+        <div class="playback-info-box" id="playbackInfoBox">
+          <button class="playback-info-header" id="playbackInfoHeader" type="button" aria-expanded="false">
+            <span class="playback-info-title">動画再生について</span>
+            <span class="playback-info-toggle" id="playbackInfoToggle">＋</span>
+          </button>
+          <div class="playback-info-body" id="playbackInfoBody" hidden>
+
+            <!-- 再生区間 (1行横並び) -->
+            <div class="clip-row">
+              <div class="clip-field">
+                <label class="clip-field-label" for="clipStartInput">開始位置</label>
+                <input class="clip-field-input" type="text" id="clipStartInput" placeholder="例 1:30 または 90">
+                <span class="clip-range-error" id="clipStartError" hidden>形式: 1:30 または 90</span>
+              </div>
+              <span class="clip-plus">＋</span>
+              <div class="clip-field">
+                <label class="clip-field-label" for="clipEndInput">終了位置</label>
+                <input class="clip-field-input" type="text" id="clipEndInput" placeholder="例 3:00 または 180">
+                <span class="clip-range-error" id="clipEndError" hidden>形式: 3:00 または 180</span>
+              </div>
+              <div class="clip-row-actions">
+                <button class="clip-apply-btn" id="clipApplyBtn" type="button">適用</button>
+                <button class="clip-clear-btn" id="clipClearBtn" type="button" hidden>クリア</button>
+              </div>
+            </div>
+            <span class="clip-active-label" id="clipActiveLabel" hidden></span>
+
+            <!-- トグル (1行横並び) -->
+            <div class="pb-toggles-row">
+              <label class="switch-label-row" id="pbLoopRow">
+                <button type="button" role="switch" class="switch-btn" id="pbLoopToggle" aria-checked="false" data-state="unchecked">
+                  <span class="switch-thumb" data-state="unchecked"></span>
+                </button>
+                <span class="pb-toggle-label">ループ</span>
+              </label>
+              <label class="switch-label-row">
+                <button type="button" role="switch" class="switch-btn" id="pbAutoplayToggle" aria-checked="true" data-state="checked">
+                  <span class="switch-thumb" data-state="checked"></span>
+                </button>
+                <span class="pb-toggle-label">▶ 自動再生</span>
+              </label>
+              <label class="switch-label-row">
+                <button type="button" role="switch" class="switch-btn" id="pbSavePositionToggle" aria-checked="false" data-state="unchecked">
+                  <span class="switch-thumb" data-state="unchecked"></span>
+                </button>
+                <span class="pb-toggle-label">📍 再生位置保存</span>
+              </label>
+              <label class="switch-label-row" id="pbAutoNextRow">
+                <button type="button" role="switch" class="switch-btn" id="pbAutoNextToggle" aria-checked="true" data-state="checked">
+                  <span class="switch-thumb" data-state="checked"></span>
+                </button>
+                <span class="pb-toggle-label">⏭ 次の動画へ自動移動</span>
+              </label>
+            </div>
+            <p class="pb-hint">位置保存はストリームモードのみ有効。ループON時は自動送り無効。</p>
+
+          </div>
         </div>
 
         <!-- Video info skeleton -->
