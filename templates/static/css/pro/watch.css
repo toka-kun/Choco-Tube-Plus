@@ -1357,6 +1357,9 @@ body.page-watch .transcript-langs {
 }
 
 body.page-watch .lang-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   background: var(--surface2);
   color: var(--muted);
   border: 1.5px solid var(--border);
@@ -1378,6 +1381,39 @@ body.page-watch .lang-btn.active {
   color: #fff;
   border-color: transparent;
   box-shadow: 0 0 10px var(--glow-purple);
+}
+
+body.page-watch .lang-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  line-height: 1.3;
+  letter-spacing: 0.02em;
+}
+
+body.page-watch .lang-badge-auto {
+  background: rgba(234, 179, 8, 0.18);
+  color: #ca8a04;
+  border: 1px solid rgba(234, 179, 8, 0.35);
+}
+
+body.page-watch .lang-btn.active .lang-badge-auto {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fef08a;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+body.page-watch .lang-badge-yta {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+body.page-watch .lang-btn.active .lang-badge-yta {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fca5a5;
+  border-color: rgba(255, 255, 255, 0.25);
 }
 
 body.page-watch .transcript-content {
