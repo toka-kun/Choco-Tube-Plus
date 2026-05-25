@@ -125,14 +125,64 @@
       const label = document.getElementById('uiThemeLabel');
       if (!btn || !label) return;
 
+      const PRO_FILES = ['base','global','search','channel','watch','library','settings','shorts'];
+      const VER = '{{ static_ver }}';
+      const BG = { pro: '#1a0e08', default: '#050914' };
+
       const current = localStorage.getItem('ui-theme') || 'default';
       label.textContent = current === 'pro' ? 'Pro' : 'Default';
       if (current === 'pro') btn.classList.add('ui-btn-pro');
 
+      function applyTheme(theme) {
+        btn.disabled = true;
+
+        const overlay = document.createElement('div');
+        overlay.style.cssText = [
+          'position:fixed', 'inset:0', 'z-index:99999',
+          'opacity:0', 'pointer-events:all',
+          'transition:opacity 0.22s ease',
+          'background:' + (BG[theme] || BG.default)
+        ].join(';');
+        document.body.appendChild(overlay);
+
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          overlay.style.opacity = '1';
+        }));
+
+        setTimeout(function() {
+          if (theme === 'pro') {
+            PRO_FILES.forEach(function(f) {
+              var el = document.createElement('link');
+              el.rel = 'stylesheet';
+              el.href = '/static/css/pro/' + f + '.css?v=' + VER;
+              el.setAttribute('data-ui-pro', '1');
+              document.head.appendChild(el);
+            });
+            document.documentElement.setAttribute('data-ui', 'pro');
+          } else {
+            document.querySelectorAll('link[data-ui-pro]').forEach(function(el) { el.remove(); });
+            document.documentElement.removeAttribute('data-ui');
+          }
+
+          label.textContent = theme === 'pro' ? 'Pro' : 'Default';
+          if (theme === 'pro') btn.classList.add('ui-btn-pro');
+          else btn.classList.remove('ui-btn-pro');
+
+          setTimeout(function() {
+            overlay.style.transition = 'opacity 0.32s ease';
+            overlay.style.opacity = '0';
+            setTimeout(function() {
+              overlay.remove();
+              btn.disabled = false;
+            }, 340);
+          }, 60);
+        }, 240);
+      }
+
       btn.addEventListener('click', function() {
         const next = (localStorage.getItem('ui-theme') || 'default') === 'default' ? 'pro' : 'default';
         localStorage.setItem('ui-theme', next);
-        location.reload();
+        applyTheme(next);
       });
     })();
   </script>
