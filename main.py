@@ -76,14 +76,13 @@ app = FastAPI(lifespan=lifespan)
 templates = Jinja2Templates(directory="templates")
 
 def _get_static_ver() -> str:
+    import hashlib, pathlib
+    h = hashlib.md5()
+    static_root = pathlib.Path("templates/static")
     try:
-        result = subprocess.run(
-            ["git", "rev-parse", "--short", "HEAD"],
-            capture_output=True, text=True, timeout=3
-        )
-        h = result.stdout.strip()
-        if h:
-            return h
+        for f in sorted(static_root.rglob("*.js")) + sorted(static_root.rglob("*.css")):
+            h.update(f.read_bytes())
+        return h.hexdigest()[:8]
     except Exception:
         pass
     return str(int(time.time()))
