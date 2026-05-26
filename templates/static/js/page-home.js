@@ -47,7 +47,10 @@
     } catch { return []; }
   }
 
+  let loadGen = 0;
+
   async function loadRecommended() {
+    const gen = ++loadGen;
     const grid = document.getElementById('recommendGrid');
     const label = document.getElementById('recommendLabel');
     if (!grid) return;
@@ -56,7 +59,10 @@
 
     const history = getSearchHistory();
 
+    if (gen !== loadGen) return;
+
     if (!history.length) {
+      if (gen !== loadGen) return;
       grid.innerHTML = `
         <div class="recommend-empty-state">
           <div class="recommend-empty-icon">🔍</div>
@@ -75,14 +81,14 @@
       return;
     }
 
-    if (label) label.textContent = '検索・視聴履歴に基づくおすすめ';
-
     const watchHist = (typeof getHistory === 'function') ? getHistory() : [];
     const watchSeeds = weightedPickRandom(watchHist, Math.min(5, watchHist.length))
       .map(v => v.videoId).filter(Boolean);
 
     const terms = weightedPickRandom(history, Math.min(2, history.length));
     const searchResults = await Promise.all(terms.map(t => fetchSearchVideos(t)));
+
+    if (gen !== loadGen) return;
 
     const searchSeeds = [];
     searchResults.forEach(results => {
@@ -95,11 +101,14 @@
     const allSeedIds = [...watchSeeds, ...searchSeeds];
 
     if (!allSeedIds.length) {
+      if (gen !== loadGen) return;
       grid.innerHTML = `<div class="empty-state"><p>おすすめ動画が見つかりませんでした。</p></div>`;
       return;
     }
 
     const relatedArrays = await Promise.all(allSeedIds.map(id => fetchRelated(id)));
+
+    if (gen !== loadGen) return;
 
     const seen = new Set();
     const combined = [];
@@ -115,12 +124,15 @@
 
     const final = shuffle(combined);
 
+    if (gen !== loadGen) return;
+
     grid.innerHTML = '';
     if (!final.length) {
       grid.innerHTML = `<div class="empty-state"><p>おすすめ動画が見つかりませんでした。</p></div>`;
       return;
     }
 
+    if (label) label.textContent = '検索・視聴履歴に基づくおすすめ';
     const missingIcons = [];
     final.forEach(video => {
       const card = createVideoCard(video);
@@ -285,6 +297,7 @@
   }
 
   async function loadTrending() {
+    const gen = ++loadGen;
     const grid = document.getElementById('recommendGrid');
     if (!grid) return;
     grid.innerHTML = '';
@@ -292,6 +305,7 @@
     try {
       const raw = await fetchMain('/api/trending?region=JP');
       const data = Array.isArray(raw) ? raw : (raw.results || raw.videos || []);
+      if (gen !== loadGen) return;
       grid.innerHTML = '';
       if (!data.length) {
         grid.innerHTML = `<div class="empty-state"><p>トレンド動画が見つかりませんでした。</p></div>`;
@@ -307,6 +321,7 @@
       });
       if (missingIcons.length > 0) fillMissingIcons(missingIcons);
     } catch {
+      if (gen !== loadGen) return;
       grid.innerHTML = `<div class="error-state"><div class="error-icon">⚠️</div><p>トレンド動画の取得に失敗しました。</p></div>`;
     }
   }
