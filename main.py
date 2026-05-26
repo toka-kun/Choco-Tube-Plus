@@ -678,7 +678,7 @@ async def whats():
 
 @app.get("/version")
 async def version():
-    return {"ver": "1.20"}
+    return {"ver": "1.22"}
 
 
 LINKLIST_URL = "https://raw.githubusercontent.com/kuru-bana/Link-list/refs/heads/main/choco-tube-plus.json"
@@ -737,6 +737,10 @@ async def index_page(request: Request):
         _keepalive_self_url = self_url
     asyncio.create_task(_ping_keepalive(self_url))
     return templates.TemplateResponse(request, "index.html")
+
+@app.get("/trending")
+async def trending_page(request: Request):
+    return templates.TemplateResponse(request, "trending.html", {"active": "trending"})
 
 @app.get("/dl")
 async def dl_page(request: Request):
