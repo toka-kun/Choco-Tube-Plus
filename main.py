@@ -1,4 +1,5 @@
 import asyncio
+import json
 import os
 import re
 import subprocess
@@ -23,7 +24,7 @@ CACHE_TTL = 5 * 60
 
 category_cache: dict = {}
 http_client: httpx.AsyncClient = None
-    
+
 
 _CLIENT_TIMEOUT = httpx.Timeout(connect=5.0, read=18.0, write=5.0, pool=5.0)
 _CLIENT_LIMITS = httpx.Limits(max_keepalive_connections=20, keepalive_expiry=30.0)
@@ -608,6 +609,301 @@ async def innertube_shorts_search_cont(contKey: str = Query(...)):
         return JSONResponse({"error": str(e)}, status_code=502)
 
 
+XEROXYT_APIS = [
+    "https://xeroxyt-nt-apiv1-0ydt.onrender.com",
+    "https://xeroxyt-nt-apiv1-5vsz.onrender.com",
+    "https://xeroxyt-nt-apiv1-m28t.onrender.com",
+]
+
+def _parse_duration_text(text: str) -> int:
+    """Parse duration text like '0:53' or '1:23:04' into total seconds."""
+    try:
+        parts = [int(p) for p in text.strip().split(":")]
+        if len(parts) == 2:
+            return parts[0] * 60 + parts[1]
+        if len(parts) == 3:
+            return parts[0] * 3600 + parts[1] * 60 + parts[2]
+    except Exception:
+        pass
+    return 0
+
+
+def _get_xeroxyt_duration_secs(item: dict) -> int:
+    """Extract duration in seconds from a Xeroxyt video item, trying all known field names."""
+    # duration.text (some API versions)
+    dur = item.get("duration")
+    if isinstance(dur, dict):
+        t = dur.get("text") or dur.get("simpleText", "")
+        if t:
+            return _parse_duration_text(t)
+    # length_text.text (observed in wild)
+    lt = item.get("length_text")
+    if isinstance(lt, dict):
+        t = lt.get("text", "")
+        if t:
+            return _parse_duration_text(t)
+    # length.simpleText
+    ln = item.get("length")
+    if isinstance(ln, dict):
+        t = ln.get("simpleText", "")
+        if t:
+            return _parse_duration_text(t)
+    return 0
+
+
+def _normalize_xeroxyt_item(item: dict) -> dict | None:
+    """Convert a Xeroxyt video/short item to Invidious-compatible format.
+    Handles both regular Video items and ShortsLockupView items,
+    mirroring mapYoutubeiVideoToVideo from the XeroxYT reference app.
+    """
+    item_type = item.get("type", "")
+
+    # --- ShortsLockupView (items from data.shorts array) ---
+    on_tap = item.get("on_tap_endpoint") or {}
+    on_tap_payload = (on_tap.get("payload") or {}) if isinstance(on_tap, dict) else {}
+    shorts_video_id = on_tap_payload.get("videoId") if isinstance(on_tap_payload, dict) else None
+
+    if item_type == "ShortsLockupView" or shorts_video_id:
+        if not shorts_video_id:
+            return None
+        overlay = item.get("overlay_metadata") or {}
+        title = ""
+        if isinstance(overlay, dict):
+            primary = overlay.get("primary_text") or {}
+            title = primary.get("text", "") if isinstance(primary, dict) else ""
+        if not title:
+            acc = item.get("accessibility_text") or ""
+            title = acc.split(",")[0] if acc else shorts_video_id
+
+        # thumbnail from on_tap_endpoint payload or ytimg fallback
+        thumb_data = on_tap_payload.get("thumbnail") if isinstance(on_tap_payload, dict) else None
+        thumb_url = f"https://i.ytimg.com/vi/{shorts_video_id}/hqdefault.jpg"
+        if isinstance(thumb_data, dict):
+            thumbs = thumb_data.get("thumbnails") or []
+            if thumbs and isinstance(thumbs[0], dict):
+                thumb_url = thumbs[0].get("url", thumb_url)
+
+        raw_views = ""
+        if isinstance(overlay, dict):
+            sec_text = overlay.get("secondary_text") or {}
+            raw_views = sec_text.get("text", "") if isinstance(sec_text, dict) else ""
+
+        try:
+            view_count = int("".join(c for c in raw_views if c.isdigit()))
+        except Exception:
+            view_count = 0
+
+        return {
+            "videoId": shorts_video_id,
+            "title": title,
+            "lengthSeconds": 60,
+            "isShort": True,
+            "authorId": "",
+            "author": "",
+            "authorThumbnails": None,
+            "viewCount": view_count,
+            "videoThumbnails": [{"url": thumb_url, "quality": "high"}],
+            "published": 0,
+        }
+
+    # --- Regular Video item ---
+    video_id = (
+        item.get("id")
+        or item.get("videoId")
+        or item.get("video_id")
+    )
+    if not video_id:
+        return None
+
+    # title
+    title_field = item.get("title") or {}
+    if isinstance(title_field, dict):
+        title = title_field.get("text") or title_field.get("simpleText") or ""
+    else:
+        title = str(title_field)
+
+    # duration
+    length_secs = _get_xeroxyt_duration_secs(item)
+
+    # author (mirroring: item.author || item.channel)
+    author_field = item.get("author") or item.get("channel") or {}
+    if isinstance(author_field, dict):
+        author_id = author_field.get("id", "")
+        author_name = author_field.get("name", "")
+        author_thumbs_list = author_field.get("thumbnails")
+        author_avatar = ""
+        if isinstance(author_thumbs_list, list) and author_thumbs_list:
+            author_avatar = author_thumbs_list[0].get("url", "") if isinstance(author_thumbs_list[0], dict) else ""
+    else:
+        author_id = author_name = author_avatar = ""
+        author_thumbs_list = None
+
+    # views
+    vc_field = item.get("view_count") or item.get("short_view_count") or {}
+    vc_text = vc_field.get("text", "") if isinstance(vc_field, dict) else ""
+    try:
+        view_count = int("".join(c for c in vc_text if c.isdigit()))
+    except Exception:
+        view_count = 0
+
+    # thumbnail (mirroring: item.thumbnails || item.thumbnail, strip query params)
+    thumbs = item.get("thumbnails") or item.get("thumbnail") or []
+    thumb_url = f"https://i.ytimg.com/vi/{video_id}/hqdefault.jpg"
+    if isinstance(thumbs, list) and thumbs:
+        raw_url = thumbs[0].get("url", "") if isinstance(thumbs[0], dict) else ""
+        if raw_url:
+            thumb_url = raw_url.split("?")[0]
+
+    # published
+    pub_field = item.get("published") or {}
+    pub_text = pub_field.get("text", "") if isinstance(pub_field, dict) else ""
+
+    return {
+        "videoId": video_id,
+        "title": title,
+        "lengthSeconds": length_secs if length_secs > 0 else 30,
+        "isShort": True,
+        "authorId": author_id,
+        "author": author_name,
+        "authorThumbnails": author_thumbs_list,
+        "authorAvatar": author_avatar,
+        "viewCount": view_count,
+        "videoThumbnails": [{"url": thumb_url, "quality": "high"}],
+        "published": 0,
+        "publishedText": pub_text,
+    }
+
+
+def _is_xeroxyt_short(item: dict) -> bool:
+    """Detect if a Xeroxyt video item is a Short."""
+    item_type = item.get("type", "")
+
+    # ShortsLockupView items are always shorts
+    if item_type == "ShortsLockupView":
+        return True
+    # on_tap_endpoint with videoId = ShortsLockupView pattern
+    on_tap = item.get("on_tap_endpoint") or {}
+    if isinstance(on_tap, dict) and (on_tap.get("payload") or {}).get("videoId"):
+        return True
+    # endpoint name reelWatchEndpoint = Short
+    ep = item.get("endpoint") or {}
+    if isinstance(ep, dict) and ep.get("name") == "reelWatchEndpoint":
+        return True
+    # thumbnail_overlays with style SHORTS
+    for ov in (item.get("thumbnail_overlays") or []):
+        if isinstance(ov, dict) and ov.get("style") == "SHORTS":
+            return True
+    # title contains #shorts
+    title_field = item.get("title") or {}
+    title_text = (title_field.get("text", "") if isinstance(title_field, dict) else str(title_field)).lower()
+    if "#shorts" in title_text:
+        return True
+    # duration <= 90s
+    secs = _get_xeroxyt_duration_secs(item)
+    if 0 < secs <= 90:
+        return True
+    return False
+
+
+@app.get("/api/xeroxyt-shorts-search")
+async def xeroxyt_shorts_search(q: str = Query(...)):
+    # Search with multiple query variants to maximize short video recall
+    query_variants = [q, q + " ショート", q + " #shorts"]
+
+    async def fetch_one(client: httpx.AsyncClient, base: str, search_q: str, page: int):
+        try:
+            resp = await client.get(
+                f"{base}/api/search",
+                params={"q": search_q, "page": page},
+                timeout=httpx.Timeout(15.0),
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            if not isinstance(data, dict):
+                return []
+            # Collect from both 'shorts' array and 'videos' that are identified as shorts
+            candidates = list(data.get("shorts") or [])
+            for v in (data.get("videos") or []):
+                if _is_xeroxyt_short(v):
+                    candidates.append(v)
+            return candidates
+        except Exception:
+            return []
+
+    async with httpx.AsyncClient() as client:
+        tasks = [
+            fetch_one(client, base, search_q, page)
+            for base in XEROXYT_APIS
+            for search_q in query_variants
+            for page in range(1, 4)
+        ]
+        results = await asyncio.gather(*tasks)
+
+    seen: set[str] = set()
+    items = []
+    for batch in results:
+        for raw in batch:
+            normalized = _normalize_xeroxyt_item(raw)
+            if normalized and normalized["videoId"] not in seen:
+                seen.add(normalized["videoId"])
+                items.append(normalized)
+
+    return JSONResponse({"items": items})
+
+
+@app.get("/api/xeroxyt-shorts-search-stream")
+async def xeroxyt_shorts_search_stream(q: str = Query(...)):
+    """SSE endpoint: streams short-video batches as each sub-request completes."""
+    query_variants = [q, q + " ショート", q + " #shorts"]
+
+    async def fetch_one(client: httpx.AsyncClient, base: str, search_q: str, page: int):
+        try:
+            resp = await client.get(
+                f"{base}/api/search",
+                params={"q": search_q, "page": page},
+                timeout=httpx.Timeout(15.0),
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            if not isinstance(data, dict):
+                return []
+            candidates = list(data.get("shorts") or [])
+            for v in (data.get("videos") or []):
+                if _is_xeroxyt_short(v):
+                    candidates.append(v)
+            return candidates
+        except Exception:
+            return []
+
+    async def generate():
+        seen: set[str] = set()
+        async with httpx.AsyncClient() as client:
+            coros = [
+                fetch_one(client, base, search_q, page)
+                for base in XEROXYT_APIS
+                for search_q in query_variants
+                for page in range(1, 4)
+            ]
+            tasks = [asyncio.ensure_future(c) for c in coros]
+            for fut in asyncio.as_completed(tasks):
+                batch = await fut
+                new_items = []
+                for raw in batch:
+                    normalized = _normalize_xeroxyt_item(raw)
+                    if normalized and normalized["videoId"] not in seen:
+                        seen.add(normalized["videoId"])
+                        new_items.append(normalized)
+                if new_items:
+                    yield f"data: {json.dumps({'items': new_items}, ensure_ascii=False)}\n\n"
+        yield "data: {\"done\":true}\n\n"
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
 @app.get("/download")
 async def download(url: str = Query(...), filename: str = Query(default="download")):
     try:
@@ -680,7 +976,7 @@ async def whats():
 
 @app.get("/version")
 async def version():
-    return {"ver": "1.23"}
+    return {"ver": "1.24"}
 
 
 LINKLIST_URL = "https://raw.githubusercontent.com/kuru-bana/Link-list/refs/heads/main/choco-tube-plus.json"
