@@ -1620,6 +1620,7 @@ body.page-watch .transcript-content {
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
   border-radius: 8px;
+  position: relative;
 }
 
 body.page-watch .transcript-content::-webkit-scrollbar { width: 4px; }
