@@ -6,17 +6,17 @@
   <title>{% block title %}Choco-tube-plus{% endblock %}</title>
   <link rel="stylesheet" href="/static/css/base.css?v={{ static_ver }}" />
   <link rel="stylesheet" href="/static/css/global.css?v={{ static_ver }}" />
-  <link rel="stylesheet" href="/static/css/search.css?v={{ static_ver }}" />
-  <link rel="stylesheet" href="/static/css/channel.css?v={{ static_ver }}" />
-  <link rel="stylesheet" href="/static/css/watch.css?v={{ static_ver }}" />
-  <link rel="stylesheet" href="/static/css/library.css?v={{ static_ver }}" />
-  <link rel="stylesheet" href="/static/css/settings.css?v={{ static_ver }}" />
-  <link rel="stylesheet" href="/static/css/shorts.css?v={{ static_ver }}" />
+  {% block page_css %}{% endblock %}
   <script>
     (function() {
       var theme = localStorage.getItem('ui-theme') || 'default';
       if (theme === 'pro') {
-        var files = ['base','global','search','channel','watch','library','settings','shorts'];
+        var always = ['base','global'];
+        var pageFiles = [];
+        document.querySelectorAll('link[data-page-css]').forEach(function(el) {
+          pageFiles.push(el.getAttribute('data-page-css'));
+        });
+        var files = always.concat(pageFiles);
         var ver = '{{ static_ver }}';
         files.forEach(function(f) {
           var el = document.createElement('link');
