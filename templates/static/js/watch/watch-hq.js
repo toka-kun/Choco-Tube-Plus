@@ -130,7 +130,10 @@ function initHQMode(streamData) {
     return;
   }
 
-  if (modeHQBtn) { modeHQBtn.disabled = false; modeHQBtn.title = ''; }
+  if (modeHQBtn) {
+    modeHQBtn.disabled = false;
+    modeHQBtn.title = '';
+  }
 
   const videoSelect = document.getElementById('hqVideoSelect');
   const audioSelect = document.getElementById('hqAudioSelect');
@@ -224,5 +227,14 @@ function initHQMode(streamData) {
     if (hqActive) applyHQStream();
   };
   syncHQOverlayFromSelects();
+
+  if (hqActive) {
+    const hqStatusEl = document.getElementById('hqStatus');
+    if (hqStatusEl) { hqStatusEl.textContent = ''; hqStatusEl.className = 'hq-status'; }
+    applyHQStream(null, true);
+  } else if (window._pendingHQMode) {
+    window._pendingHQMode = false;
+    setTimeout(() => { if (modeHQBtn) modeHQBtn.click(); }, 0);
+  }
 }
 
