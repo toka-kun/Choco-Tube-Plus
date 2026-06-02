@@ -33,6 +33,7 @@ let streamVideoFormats = [];
 let lastNormalStreamSrc = '';
 let cachedInvInstance = null;
 let playerErrorHandler = null;
+let streamSourcePref = getSettings().streamSource || 'auto'; // 'auto' | 'invidious' | 'rapidapi'
 
 // ── Transcript state ──
 let transcriptTracks = [];
