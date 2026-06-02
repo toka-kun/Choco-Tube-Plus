@@ -103,6 +103,18 @@ function initPlaybackSettingsPanel() {
     });
   });
 
+  // Settings tab: stream source
+  document.querySelectorAll('#pbsetStreamSrcRow .pbset-mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (typeof streamSourcePref !== 'undefined') {
+        streamSourcePref = btn.dataset.src;
+        saveSettings({ ...getSettings(), streamSource: streamSourcePref });
+        if (typeof window._syncStreamSrcUI === 'function') window._syncStreamSrcUI(streamSourcePref);
+      }
+      _renderSettingsTab();
+    });
+  });
+
   // Settings tab: volume
   const pbsetVolSlider = document.getElementById('pbsetVolSlider');
   const pbsetMuteBtn   = document.getElementById('pbsetMuteBtn');
@@ -530,6 +542,14 @@ function _renderSettingsTab() {
   _pbsetSyncToggle('pbsetAutoplayToggle', s.autoplay !== false);
   _pbsetSyncToggle('pbsetSavePosToggle',  !!s.savePosition);
   _pbsetSyncToggle('pbsetAutoNextToggle', !!s.autoplayNext);
+
+  const curSrc = (typeof streamSourcePref !== 'undefined') ? streamSourcePref : (s.streamSource || 'auto');
+  const srcRow = document.getElementById('pbsetStreamSrcRow');
+  if (srcRow) {
+    srcRow.querySelectorAll('.pbset-mode-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.src === curSrc);
+    });
+  }
 
   const speed = player ? player.playbackRate : 1;
   document.querySelectorAll('.pbset-speed-btn').forEach(btn => {
