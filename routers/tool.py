@@ -49,6 +49,11 @@ async def tool_youtube_xerox():
     return FileResponse("templates/tool/youtube/xerox.html", media_type="text/html")
 
 
+@router.get("/tool/youtube/light")
+async def tool_youtube_light():
+    return FileResponse("templates/tool/youtube/light.html", media_type="text/html")
+
+
 @router.get("/tool/youtube/wista")
 @router.get("/tool/youtube/wista/")
 @router.get("/tool/youtube/wista/{path:path}")
