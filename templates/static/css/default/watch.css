@@ -454,6 +454,18 @@ body.page-watch .vctrls-dd-loading {
 }
 /* Speed panel: center-align options */
 body.page-watch #vcSpeedPanel .vctrls-dd-opt { text-align: center; }
+/* Zernio status inside dropdown */
+body.page-watch .vctrls-zernio-status {
+  font-size: 0.68rem;
+  color: rgba(255,255,255,0.45);
+  padding: 0.15rem 0.45rem 0;
+  display: block;
+  min-height: 0;
+}
+body.page-watch .vctrls-zernio-status:empty { display: none; }
+body.page-watch .vctrls-zernio-status--fail { color: #f87171; }
+/* Zernio qual section label spacing */
+body.page-watch #zernioQualBtns .vctrls-dd-label { margin-top: 0.35rem; }
 
 /* Hide cursor while playing with controls hidden */
 body.page-watch .player-wrap.ctrls-playing-hidden { cursor: none; }
@@ -575,6 +587,13 @@ body.page-watch .pc-stream-src-item:hover {
   color: #fff;
 }
 body.page-watch .pc-stream-src-item.selected {
+  color: #fff;
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+body.page-watch .pc-stream-src-item.selected::before {
+  content: '✓';
+  margin-right: 0.35rem;
+  font-size: 0.78rem;
   color: var(--accent-bright);
 }
 
@@ -601,7 +620,19 @@ body.page-watch .pc-mode-btn.active {
   background: linear-gradient(135deg, var(--accent), var(--w-adk));
   color: #fff;
   border-color: transparent;
-  box-shadow: 0 0 8px var(--glow-purple);
+  box-shadow: 0 0 10px var(--glow-purple), 0 2px 8px rgba(0,0,0,0.4);
+  position: relative;
+}
+body.page-watch .pc-mode-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 18px;
+  height: 3px;
+  border-radius: 99px;
+  background: var(--accent-bright);
 }
 
 body.page-watch .pc-mode-btn:disabled {
