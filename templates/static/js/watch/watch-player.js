@@ -1,4 +1,4 @@
-function setupPlayer(streamData, videoId) {
+function setupPlayer(streamData, videoId, instanceUrl) {
   currentStreamData = streamData;
   currentVideoId = videoId;
   const player = document.getElementById('videoPlayer');
@@ -64,11 +64,11 @@ function setupPlayer(streamData, videoId) {
     player.addEventListener('error', playerErrorHandler);
   }
 
-  const hasAdaptive = (streamData.adaptiveFormats || []).length > 0;
-  if (hasAdaptive) {
-    initHQMode(streamData);
+  if (instanceUrl === 'zernio') {
+    // Zernio は adaptiveFormats を持たない。HQ状態は watch-controls.js の
+    // setPendingHQMode() + バックグラウンドフェッチ側で管理するため、ここでは触れない。
   } else {
-    if (typeof setPendingHQMode === 'function') setPendingHQMode();
+    initHQMode(streamData);
   }
   setupStreamOnlyBtns();
 }
