@@ -163,3 +163,4 @@ uvicorn main:app --host 0.0.0.0 --port 5000
 - キャッシュTTL: 検索結果5分（sessionStorage）
 - デフォルト再生速度・音量・自動次再生・ループはブラウザのlocalStorageに保存
 https://choco-access-counter.onrender.com/
+https://replit.com/@kuru-bana43/ChocoTube-Plus-mainzip
