@@ -4,7 +4,7 @@
 {% block content %}
 <div class="gp-wrap">
   <nav class="gp-navbar">
-    <a href="/game/home" class="gp-back">
+    <a href="/tool/game" class="gp-back">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="16" height="16"><polyline points="15 18 9 12 15 6"/></svg>
       ゲーム一覧
     </a>
@@ -25,7 +25,7 @@
   <div class="gp-frame-wrap" id="frame-wrap">
     <iframe
       id="game-frame"
-      src="/game/raw/{{ game.slug }}"
+      src="/tool/game/raw/{{ game.slug }}"
       allowfullscreen
       allow="autoplay; fullscreen; gamepad"
       scrolling="no"
