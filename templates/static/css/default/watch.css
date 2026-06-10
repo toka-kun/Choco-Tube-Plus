@@ -1068,6 +1068,28 @@ body.page-watch .watch-meta {
 
 body.page-watch .watch-meta .meta-sep { opacity: 0.4; }
 
+body.page-watch .info-source-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.18rem 0.55rem;
+  border-radius: 4px;
+  letter-spacing: 0.03em;
+  margin-bottom: 0.6rem;
+  transition: background 0.3s, color 0.3s, border-color 0.3s;
+}
+body.page-watch .info-source-tag.source-invidious {
+  background: rgba(167, 139, 250, 0.13);
+  color: var(--accent-bright);
+  border: 1px solid rgba(167, 139, 250, 0.35);
+}
+body.page-watch .info-source-tag.source-piped {
+  background: rgba(249, 115, 22, 0.12);
+  color: #fb923c;
+  border: 1px solid rgba(249, 115, 22, 0.35);
+}
+
 /* ===== CHANNEL ROW ===== */
 body.page-watch .channel-row {
   display: flex;
