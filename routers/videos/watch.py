@@ -595,3 +595,120 @@ async def proxy_piped_stream(url: str, request: Request):
             await cl.aclose()
 
     return StreamingResponse(_gen(), status_code=resp.status_code, headers=fwd)
+
+
+# ── Video info (metadata + recommended videos) ────────────────────────────────
+
+_VIDEOINFO_CACHE: dict = {}
+_VIDEOINFO_TTL = 10 * 60  # 10 minutes
+
+
+def _piped_to_invidious_videoinfo(data: dict, video_id: str) -> dict:
+    """Piped /streams/{videoId} レスポンスを Invidious 互換の形式に変換する。"""
+    related = []
+    for s in data.get("relatedStreams") or []:
+        vid = (s.get("url") or "").split("?v=")[-1].split("/")[-1]
+        if not vid:
+            continue
+        related.append({
+            "videoId": vid,
+            "title": s.get("title", ""),
+            "author": s.get("uploaderName", ""),
+            "authorId": (s.get("uploaderUrl") or "").replace("/channel/", ""),
+            "authorThumbnails": [],
+            "lengthSeconds": s.get("duration", 0),
+            "viewCount": s.get("views", 0),
+            "publishedText": s.get("uploadedDate", ""),
+            "videoThumbnails": [{"url": s.get("thumbnail", ""), "width": 0, "height": 0}],
+        })
+
+    uploader_url = data.get("uploaderUrl") or ""
+    author_id = uploader_url.replace("/channel/", "") if "/channel/" in uploader_url else uploader_url
+    avatar_url = data.get("uploaderAvatar") or ""
+
+    return {
+        "videoId": video_id,
+        "title": data.get("title", ""),
+        "description": data.get("description", ""),
+        "viewCount": data.get("views", 0),
+        "likeCount": data.get("likes", 0),
+        "publishedText": data.get("uploadDate", ""),
+        "author": data.get("uploader", ""),
+        "authorId": author_id,
+        "authorThumbnails": [{"url": avatar_url, "width": 48, "height": 48}] if avatar_url else [],
+        "subCountText": "",
+        "subCount": 0,
+        "recommendedVideos": related,
+        "_source": "piped",
+    }
+
+
+async def _fetch_inv_videoinfo(video_id: str) -> dict | None:
+    """Invidious から動画情報を取得する。失敗時は None を返す。"""
+    try:
+        from core import proxy_parallel
+        result = await proxy_parallel("video", f"/api/v1/videos/{video_id}")
+        data = result.get("data", {})
+        if isinstance(data, dict) and data.get("title"):
+            data.setdefault("_source", "invidious")
+            return data
+    except Exception:
+        pass
+    return None
+
+
+async def _fetch_piped_videoinfo(video_id: str) -> dict | None:
+    """Piped から動画情報を取得する。失敗時は None を返す。"""
+    for instance in _PIPED_INSTANCES:
+        try:
+            async with httpx.AsyncClient(
+                timeout=httpx.Timeout(12.0), follow_redirects=True
+            ) as cl:
+                r = await cl.get(f"{instance}/streams/{video_id}")
+                r.raise_for_status()
+                data = r.json()
+                if isinstance(data, dict) and not data.get("error") and data.get("title"):
+                    return _piped_to_invidious_videoinfo(data, video_id)
+        except Exception:
+            continue
+    return None
+
+
+@router.get("/api/videoinfo/{video_id}")
+async def api_videoinfo(video_id: str):
+    now = time.time()
+    cached = _VIDEOINFO_CACHE.get(video_id)
+    if cached and now - cached["time"] < _VIDEOINFO_TTL:
+        return JSONResponse(cached["data"])
+
+    # Invidious と Piped を並列で叩き、先に有効データを返した方を即返却する。
+    # Piped が先に取れた場合はそのまま返し、クライアント側の upgrade ロジック
+    # (_source === 'piped' のとき fetchMain('/api/videos/') で Invidious に差し替え)
+    # にバックグラウンドアップグレードを任せる。
+    inv_task   = asyncio.create_task(_fetch_inv_videoinfo(video_id))
+    piped_task = asyncio.create_task(_fetch_piped_videoinfo(video_id))
+
+    data    = None
+    pending = {inv_task, piped_task}
+
+    while pending:
+        done, pending = await asyncio.wait(pending, return_when=asyncio.FIRST_COMPLETED)
+        for task in done:
+            if task.exception() is None:
+                result = task.result()
+                if result:
+                    data = result
+        # どちらかで取れたら即座にキャンセルして返す
+        if data:
+            break
+
+    for t in pending:
+        t.cancel()
+    if pending:
+        await asyncio.gather(*pending, return_exceptions=True)
+
+    if data:
+        _VIDEOINFO_CACHE[video_id] = {"data": data, "time": now}
+        return JSONResponse(data)
+
+    return JSONResponse({"error": "動画情報の取得に失敗しました"}, status_code=502)
