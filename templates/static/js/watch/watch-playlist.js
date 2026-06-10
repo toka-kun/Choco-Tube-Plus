@@ -245,14 +245,27 @@ async function reloadAll(videoId) {
   document.getElementById('transcriptLangs').innerHTML = '';
   document.getElementById('transcriptContent').innerHTML = '';
 
-  try {
-    const [streamResult, metaData] = await Promise.all([
-      withRetry(() => fetchBestStream(videoId)),
-      withRetry(() => fetchMain(`/api/videos/${videoId}`))
-    ]);
+  const _genOk = () => myGen === _reloadGen;
 
-    // 切り替えで新しいリロードが始まっていたら破棄
-    if (myGen !== _reloadGen) return;
+  // 動画情報取得：成功 or 最大リトライまで独立して送り続ける（ストリームをブロックしない）
+  const _infoPromise = (async () => {
+    const maxRetries = 10;
+    for (let i = 0; i < maxRetries; i++) {
+      if (!_genOk()) return null;
+      try {
+        const r = await fetch(`/api/videoinfo/${encodeURIComponent(videoId)}`, { signal: AbortSignal.timeout(20000) });
+        if (r.ok) return r.json();
+      } catch {}
+      if (i < maxRetries - 1)
+        await new Promise(res => setTimeout(res, Math.min(1500 * Math.pow(1.5, i), 15000)));
+    }
+    return null;
+  })();
+
+  // ストリーム取得：成功したらすぐ再生開始
+  try {
+    const streamResult = await withRetry(() => fetchBestStream(videoId));
+    if (!_genOk()) return;
 
     const { data: streamData, instanceUrl } = streamResult;
     const invInstance = instanceUrl || streamData._invidious_instance || null;
@@ -266,14 +279,38 @@ async function reloadAll(videoId) {
     setHQInstanceLabel(invInstance);
 
     setupPlayer(streamData, videoId, instanceUrl);
-    renderVideoInfo(metaData, videoId);
-    renderRelated(metaData.recommendedVideos || []);
+
+    // 動画情報が取れたら UI を更新（ストリーム再生とは非同期）
+    _infoPromise.then(metaData => {
+      if (!_genOk()) return;
+      if (metaData) {
+        renderVideoInfo(metaData, videoId);
+        renderRelated(metaData.recommendedVideos || []);
+
+        // Pipedが先に返った場合、バックグラウンドでInvidiousを取得して差し替え
+        if (metaData._source === 'piped') {
+          const _upgradeGen = _reloadGen;
+          fetchMain(`/api/videos/${videoId}`).then(invMeta => {
+            if (_upgradeGen !== _reloadGen) return;
+            if (!invMeta || invMeta.error) return;
+            renderVideoInfo(invMeta, videoId);
+            renderRelated(invMeta.recommendedVideos || []);
+          }).catch(() => {});
+        }
+      } else {
+        document.getElementById('infoSkeleton').hidden = true;
+        document.getElementById('videoInfo').removeAttribute('hidden');
+        document.getElementById('watchTitle').textContent = '情報を取得できませんでした';
+        renderRelated([]);
+      }
+    });
+
   } catch (e) {
-    if (myGen !== _reloadGen) return;
+    if (!_genOk()) return;
     console.error(e);
   }
 
-  if (myGen !== _reloadGen) return;
+  if (!_genOk()) return;
   initTranscript(videoId);
 
   reloadAllInProgress = false;
