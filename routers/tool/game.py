@@ -36,6 +36,13 @@ GAMES = [
         "file": "templates/tool/game/fun/block-blast.html",
     },
     {
+        "slug": "cobb-can-move",
+        "title": "Cobb Can Move",
+        "thumb": "/photo/game/cobb-can-move.png",
+        "desc": "敵だけがレベルアップし続けるホラーゲーム。果たして生き残れるか？",
+        "file": "templates/tool/game/fun/cobb-can-move.html",
+    },
+    {
         "slug": "Count_Master",
         "title": "Count Masters",
         "thumb": "/photo/game/Count_Masters.png",
