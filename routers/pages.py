@@ -1,4 +1,5 @@
 import asyncio
+import json
 
 from fastapi import APIRouter, Request
 from fastapi.responses import FileResponse, JSONResponse
@@ -6,12 +7,13 @@ from starlette.responses import RedirectResponse
 
 import core
 from core import templates
+from routers.videos.watch import _EDU_PARAMS_CACHE
 
 HARDCODED_PASSWORD = "choco"
 AUTH_COOKIE_NAME = "choco_auth"
 AUTH_COOKIE_VALUE = "choco_session_ok"
 WELCOME_COOKIE_NAME = "choco_welcome_seen"
-CURRENT_VERSION = "1.41"
+CURRENT_VERSION = "1.42"
 
 router = APIRouter()
 
@@ -62,7 +64,9 @@ async def watch_page(request: Request):
 
 @router.get("/shorts/{video_id}")
 async def shorts_page(request: Request, video_id: str):
-    return templates.TemplateResponse(request, "shorts.html")
+    cached = _EDU_PARAMS_CACHE.get("data")
+    edu_params_json = json.dumps(cached["json"] if cached else [])
+    return templates.TemplateResponse(request, "shorts.html", {"edu_params_json": edu_params_json})
 
 
 @router.get("/search")
