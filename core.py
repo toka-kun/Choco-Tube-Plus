@@ -9,6 +9,8 @@ from fastapi.templating import Jinja2Templates
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 
+APP_NAME = "choco-tube-plus"
+
 INVIDIOUS_LIST_URL = "https://raw.githubusercontent.com/kuru-bana/yt-data/refs/heads/main/list/injidious.json"
 INNERTUBE_BASE = "https://choco-youtube-js.onrender.com"
 CACHE_TTL = 5 * 60
