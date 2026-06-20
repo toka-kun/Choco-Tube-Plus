@@ -499,15 +499,24 @@
 
     initSfComments();
 
-    (async () => {
-      const [, metaResult] = await Promise.all([
-        fetchEduParams(),
-        (async () => {
-          try { return await withRetry(() => fetchMain(`/api/videos/${startId}`)); } catch { return null; }
-        })(),
-      ]);
+    // プレイヤーをすぐ起動（eduParams未取得でもフォールバック値で再生開始）
+    loadPlayer(startId);
+    updateNavBtns();
 
-      loadPlayer(startId);
+    (async () => {
+      // eduParams と メタデータを並行取得
+      fetchEduParams().then(() => {
+        // eduParams が取れたらプレイヤーを正式パラメータで再ロード
+        // （フォールバック '?autoplay=1' から変わった場合のみ）
+        if (eduParams.length && queue[queueIdx]?.videoId === startId) {
+          loadPlayer(startId);
+        }
+      });
+
+      let metaResult = null;
+      try {
+        metaResult = await withRetry(() => fetchMain(`/api/videos/${startId}`));
+      } catch (_) {}
 
       if (metaResult) {
         queue[0].meta = metaResult;
