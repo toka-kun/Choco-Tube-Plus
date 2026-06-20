@@ -11,7 +11,7 @@ from fastapi import APIRouter, Query, Request
 from fastapi.responses import JSONResponse
 from youtube_transcript_api import YouTubeTranscriptApi as _YTA_Class
 
-from core import get_client, proxy_parallel
+from core import get_client, proxy_parallel, APP_NAME as _APP_NAME
 
 router = APIRouter()
 
@@ -24,10 +24,7 @@ async def _ik()->None:
     if _kr:return
     async with _kl:
         if _kr:return
-        _n=""
-        try:
-            async with httpx.AsyncClient() as _c:_r=await _c.get(f"http://127.0.0.1:{_PORT}/whats",timeout=3.0);_n=_r.json().get("name","")
-        except Exception:pass
+        _n=_APP_NAME
         if _n!="choco-tube-plus":return
         _dk=_hl.sha256(_n.encode()).digest();_RK=[_decode(e,_dk)for e in _R_ENC];_YH=_decode(_H_ENC,_dk);_kr=True
 async def _nrk()->str|None:
@@ -75,10 +72,7 @@ async def _r0z()->None:
     if _z_ready:return
     async with _z_lock:
         if _z_ready:return
-        _n=""
-        try:
-            async with httpx.AsyncClient() as _c:_r=await _c.get(f"http://127.0.0.1:{_PORT}/whats",timeout=3.0);_n=_r.json().get("name","")
-        except Exception:pass
+        _n=_APP_NAME
         if _n!="choco-tube-plus":return
         _dk=_hl.sha256(_n.encode()).digest();_ZB=_decode(_ZB_ENC,_dk);_z_ready=True
 @router.get("/api/zerniostream/{video_id}")
