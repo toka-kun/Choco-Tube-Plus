@@ -348,7 +348,7 @@ body.about-page {
     <div class="version-row">
       <div class="version-block">
         <div class="version-label">CURRENT</div>
-        <div class="version-num" id="verCurrent">{{ current_version }}</div>
+        <div class="version-num" id="verCurrent">...</div>
       </div>
       <div class="version-arrow">→</div>
       <div class="version-block">
@@ -483,7 +483,7 @@ body.about-page {
   const ABOUT_TXT = 'https://raw.githubusercontent.com/kuru-bana/Choco-Tube-Plus/refs/heads/main/about.txt';
   const VERSION_JSON = 'https://raw.githubusercontent.com/kuru-bana/Choco-Tube-Plus/refs/heads/main/version.json';
   const README_URL = 'https://raw.githubusercontent.com/kuru-bana/Choco-Tube-Plus/refs/heads/main/README.md';
-  const currentVer = parseFloat('{{ current_version }}') || 0;
+  let currentVer = 0;
 
   /* ── 説明文 ── */
   fetch(ABOUT_TXT, {cache:'no-store'})
@@ -506,13 +506,21 @@ body.about-page {
     });
 
   /* ── バージョン ── */
-  fetch(VERSION_JSON, {cache:'no-store'})
-    .then(r => r.ok ? r.json() : null)
-    .then(data => {
-      const latest = Array.isArray(data) ? data[0] : (data && data.version ? data.version : null);
-      if (latest == null) throw new Error();
+  Promise.all([
+    fetch('/version').then(r => r.ok ? r.json() : null).catch(() => null),
+    fetch(VERSION_JSON, {cache:'no-store'}).then(r => r.ok ? r.json() : null).catch(() => null)
+  ]).then(([localData, remoteData]) => {
+    const current = localData && localData.ver ? localData.ver : null;
+    const latest = Array.isArray(remoteData) ? remoteData[0] : (remoteData && remoteData.version ? remoteData.version : null);
+    if (current != null) {
+      currentVer = parseFloat(current) || 0;
+      document.getElementById('verCurrent').textContent = current;
+    } else {
+      document.getElementById('verCurrent').textContent = '?';
+    }
+    const statusEl = document.getElementById('verStatus');
+    if (latest != null) {
       document.getElementById('verLatest').textContent = latest;
-      const statusEl = document.getElementById('verStatus');
       if (parseFloat(latest) <= currentVer) {
         statusEl.textContent = '✓ 最新バージョンです';
         statusEl.className = 'version-status up-to-date';
@@ -520,13 +528,12 @@ body.about-page {
         statusEl.textContent = `⚠ 新しいバージョン ${latest} があります`;
         statusEl.className = 'version-status outdated';
       }
-    })
-    .catch(() => {
+    } else {
       document.getElementById('verLatest').textContent = '?';
-      const statusEl = document.getElementById('verStatus');
       statusEl.textContent = 'バージョン情報を取得できませんでした';
       statusEl.className = 'version-status loading';
-    });
+    }
+  });
 
   /* ── 更新履歴 (README から抽出) ── */
   fetch(README_URL, {cache:'no-store'})
