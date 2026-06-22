@@ -15,7 +15,7 @@ from core import get_client, proxy_parallel, APP_NAME as _APP_NAME
 
 router = APIRouter()
 
-_PORT=int(os.environ.get('PORT',5000));_R_ENC=["vbTXuEZyWDamPELNOVCupGJ2sHkmK23QPTiBMWMiKeC05IO6FyIfaak7SZs0F/DzY3w=","4+bU7hZ5CjGlP0bIOVCu9mB55X4mK2bVa2uCZDl1dbq8vNG4FyIfaaRtQM5uR6Dxanw=","sLXUskZ6DzehOkadOVCu8WAutCkmK2HSY2yCYmMidbqws9a+FyIfafI7Qso2G6X4ZC0="];_H_ENC="ERFeI4oqifV87VLOQbxec9V/SFxxvNpiyuVyWlU33gQTElN6jD7F/HT4QcgcuAk="
+_PORT=int(os.environ.get('PORT',5000));_R_ENC=["vbTXuEZyWDamPELNOVCupGJ2sHkmK23QPTiBMWMiKeC05IO6FyIfaak7SZs0F/DzY3w=","4+bU7hZ5CjGlP0bIOVCu9mB55X4mK2bVa2uCZDl1dbq8vNG4FyIfaaRtQM5uR6Dxanw=","sLXUskZ6DzehOkadOVCu8WAutCkmK2HSY2yCYmMidbqws9a+FyIfafI7Qso2G6X4ZC0=","vLbWu0FyWGCjbUDKOVCu8WJ7sC4mK2TWa2vTMTh1erfjt9S4FiIfafRqR85vFv2lMCo="];_H_ENC="ERFeI4oqifV87VLOQbxec9V/SFxxvNpiyuVyWlU33gQTElN6jD7F/HT4QcgcuAk="
 _kl=asyncio.Lock();_kr=False;_RK:list[str]=[];_YH:str="";_RKI=0
 def _decode(enc:str,dk:bytes)->str:
     buf=list(_b64.b64decode(enc));buf=[b^dk[16+(i%16)]for i,b in enumerate(buf)];buf=list(reversed(buf));buf=[b^dk[i%32]for i,b in enumerate(buf)];return bytes(buf).decode()
