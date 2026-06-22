@@ -59,17 +59,35 @@ async def _periodic_keepalive():
         await asyncio.sleep(10 * 60)
 
 
+LINKUP_JSON_URL = "https://raw.githubusercontent.com/kuru-bana/Choco-Tube-Plus/main/linkup.json"
+
+
+async def _fetch_linkup_bases() -> list[str]:
+    """GitHub rawのlinkup.jsonからAPIベースURLリストを取得する。"""
+    try:
+        client = await get_client()
+        resp = await client.get(LINKUP_JSON_URL, timeout=10)
+        text = resp.text
+        # URLを正規表現で抽出（JSONが不正形式でも対応）
+        bases = re.findall(r'https?://[^\s\],\'"]+', text)
+        return [b.rstrip("/") for b in bases if b]
+    except Exception:
+        return []
+
+
 async def _ping_keepalive(self_url: str):
-    targets = [
-        f"https://link-up-r6fn.onrender.com/url={self_url}",
-        f"https://link-up-hsda.onrender.com/url={self_url}",
-    ]
-    for t in targets:
+    """linkup.jsonのAPIを順番に試し、成功したら終了する。"""
+    bases = await _fetch_linkup_bases()
+    if not bases:
+        return
+    for base in bases:
         try:
             client = await get_client()
-            await client.get(t, timeout=10)
+            resp = await client.get(f"{base}/url={self_url}", timeout=15)
+            if resp.status_code < 500:
+                return
         except Exception:
-            pass
+            continue
 
 
 # ── Templates ─────────────────────────────────────────────────────────────────
