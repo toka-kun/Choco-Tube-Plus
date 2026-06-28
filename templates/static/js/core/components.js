@@ -429,6 +429,28 @@ async function fetchRapidStream(videoId) {
   throw lastErr;
 }
 
+async function fetchSiaStream(videoId) {
+  const url = `/api/siastream/${encodeURIComponent(videoId)}`;
+  let lastErr;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(18000) });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      if (!data.formatStreams && !data.adaptiveFormats) throw new Error('no stream data');
+      return { data, instanceUrl: 'sia' };
+    } catch (e) {
+      lastErr = e;
+      if (attempt < 1 && (e.name === 'TimeoutError' || e.name === 'TypeError')) continue;
+      throw e;
+    }
+  }
+  throw lastErr;
+}
+
 function copyText(text) {
   return navigator.clipboard.writeText(text).catch(() => {
     const ta = document.createElement('textarea');
