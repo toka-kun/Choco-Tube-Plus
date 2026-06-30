@@ -202,10 +202,31 @@ _GAME_MAP = {g["slug"]: g for g in GAMES}
 
 
 @router.get("/tool/game")
-async def game_home(request: Request):
+async def game_landing(request: Request):
+    return templates.TemplateResponse(
+        request, "tool/game/landing.html", {"active": "tool"}
+    )
+
+
+@router.get("/tool/game/fun")
+async def game_fun(request: Request):
     return templates.TemplateResponse(
         request, "tool/game/home.html", {"games": GAMES, "active": "tool"}
     )
+
+
+@router.get("/tool/game/cloudmoon")
+async def game_cloudmoon():
+    return FileResponse("templates/tool/game/cloudmoon/index.html", media_type="text/html")
+
+
+@router.get("/tool/game/raw/{game_slug}")
+async def game_raw(game_slug: str):
+    game = _GAME_MAP.get(game_slug)
+    if game is None or not os.path.exists(game["file"]):
+        from fastapi.responses import Response
+        return Response(status_code=404)
+    return FileResponse(game["file"], media_type="text/html")
 
 
 @router.get("/tool/game/{game_slug}")
@@ -217,12 +238,3 @@ async def game_play(request: Request, game_slug: str):
     return templates.TemplateResponse(
         request, "tool/game/play.html", {"game": game, "active": "tool"}
     )
-
-
-@router.get("/tool/game/raw/{game_slug}")
-async def game_raw(game_slug: str):
-    game = _GAME_MAP.get(game_slug)
-    if game is None or not os.path.exists(game["file"]):
-        from fastapi.responses import Response
-        return Response(status_code=404)
-    return FileResponse(game["file"], media_type="text/html")
