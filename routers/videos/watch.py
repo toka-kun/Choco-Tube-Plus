@@ -145,6 +145,19 @@ def _sny(raw:dict)->dict:
         ac=_sc(s.get('acodec',''));note=s.get('formatNote','')
         if not url:continue
         af.append({'url':url,'itag':str(s.get('formatId','')),'type':f'audio/{ext}','quality':note,'qualityLabel':'','fps':0,'size':'','bitrate':str(int(s.get('tbr',0) or 0)),'container':ext,'encoding':ac})
+    # ライブ動画のHLS (m3u8) ストリーム対応
+    _m3u8_list=raw.get('m3u8',{}).get('list',[])
+    if _m3u8_list and not fs:
+        _seen=set()
+        for s in _m3u8_list:
+            url=s.get('streamUrl','');h=s.get('height') or 0;w=s.get('width') or 0
+            fid=s.get('formatId');fps=s.get('fps') or 30;ext=s.get('ext') or 'mp4'
+            if not url or not h or not fid:continue
+            key=(fid,h)
+            if key in _seen:continue
+            _seen.add(key)
+            q=f'{h}p';vc=_sc(s.get('vcodec',''));sz=f'{w}x{h}'if w else''
+            fs.append({'url':url,'itag':str(fid),'type':f'video/{ext}','quality':q,'qualityLabel':q,'fps':fps,'size':sz,'bitrate':str(int(s.get('tbr',0) or 0)),'container':ext,'encoding':vc,'isHls':True})
     fs.sort(key=lambda f:_qo.get(f.get('quality',''),9))
     return{'formatStreams':fs,'adaptiveFormats':af,'_source':'sia'}
 @router.get("/api/siastream/{video_id}")
