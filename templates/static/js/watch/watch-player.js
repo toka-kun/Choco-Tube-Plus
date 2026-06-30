@@ -1,4 +1,5 @@
 let _hlsInstance = null;
+let _currentVideoSrc = '';
 
 function _isHlsUrl(url) {
   return typeof url === 'string' && url.includes('.m3u8');
@@ -9,6 +10,7 @@ function applyVideoSrc(player, url) {
     _hlsInstance.destroy();
     _hlsInstance = null;
   }
+  _currentVideoSrc = url || '';
   if (!url) {
     player.src = '';
     return;
@@ -20,6 +22,10 @@ function applyVideoSrc(player, url) {
   } else {
     player.src = url;
   }
+}
+
+function getVideoSrc() {
+  return _currentVideoSrc || '';
 }
 
 function setupPlayer(streamData, videoId, instanceUrl) {
