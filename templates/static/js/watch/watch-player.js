@@ -1,3 +1,27 @@
+let _hlsInstance = null;
+
+function _isHlsUrl(url) {
+  return typeof url === 'string' && url.includes('.m3u8');
+}
+
+function applyVideoSrc(player, url) {
+  if (_hlsInstance) {
+    _hlsInstance.destroy();
+    _hlsInstance = null;
+  }
+  if (!url) {
+    player.src = '';
+    return;
+  }
+  if (_isHlsUrl(url) && typeof Hls !== 'undefined' && Hls.isSupported()) {
+    _hlsInstance = new Hls({ enableWorker: true });
+    _hlsInstance.loadSource(url);
+    _hlsInstance.attachMedia(player);
+  } else {
+    player.src = url;
+  }
+}
+
 function setupPlayer(streamData, videoId, instanceUrl) {
   currentStreamData = streamData;
   currentVideoId = videoId;
@@ -27,7 +51,7 @@ function setupPlayer(streamData, videoId, instanceUrl) {
     if (!bestFormat) return;
 
     lastNormalStreamSrc = bestFormat.url;
-    player.src = bestFormat.url;
+    applyVideoSrc(player, bestFormat.url);
     skeleton.hidden = true;
 
     const vcQualBtn = document.getElementById('vcQualBtn');
