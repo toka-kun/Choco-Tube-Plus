@@ -138,7 +138,7 @@ function initModeBar(videoId) {
       setInstanceLabel(cachedInvInstance);
     }
     if (lastStreamSrc) {
-      player.src = lastStreamSrc;
+      applyVideoSrc(player, lastStreamSrc);
       player.removeAttribute('hidden');
       if (ct > 1) {
         player.addEventListener('loadedmetadata', () => {
@@ -655,7 +655,7 @@ function switchStreamOnlyMode(mode) {
     if (videoTrackBar) videoTrackBar.setAttribute('hidden', '');
     const restoreSrc = lastNormalStreamSrc || player.src;
     if (prevMode === 'audio' || prevMode === 'video') {
-      player.src = restoreSrc;
+      applyVideoSrc(player, restoreSrc);
       player.currentTime = ct;
     }
     player.muted = volState.muted;
@@ -709,7 +709,7 @@ function switchStreamOnlyMode(mode) {
     if (audioTrackBar) audioTrackBar.setAttribute('hidden', '');
     if (videoTrackBar) videoTrackBar.removeAttribute('hidden');
     if (prevMode === 'audio' && lastNormalStreamSrc) {
-      player.src = lastNormalStreamSrc;
+      applyVideoSrc(player, lastNormalStreamSrc);
     }
     player.muted = true;
 
