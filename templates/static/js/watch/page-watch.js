@@ -247,7 +247,7 @@ function setupQualities(formatStreams) {
     }
     // If video-only mode: keep mode, keep muted — just change quality
     lastNormalStreamSrc = fmt.url;
-    player.src = fmt.url;
+    applyVideoSrc(player, fmt.url);
     player.currentTime = currentTime;
     if (prevMode === 'video') player.muted = true;
     if (wasPlaying) player.play().catch(() => {});
