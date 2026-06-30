@@ -201,7 +201,7 @@ async function reloadAll(videoId) {
   const modeHQ = document.getElementById('modeHQ');
 
   player.pause();
-  player.src = '';
+  applyVideoSrc(player, '');
   player.setAttribute('hidden', '');
   nocookiePlayer.src = 'about:blank';
   nocookiePlayer.setAttribute('hidden', '');
